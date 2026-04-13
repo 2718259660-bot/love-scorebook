@@ -1,6 +1,6 @@
 """
 恋爱计分小本本 - Flask 后端
-数据存储在 JSONBin.io 云端，两人可同时使用
+数据存储在 GitHub Gist，两人可同时使用
 """
 
 import os
@@ -10,67 +10,58 @@ import urllib.request
 import urllib.error
 import ssl
 from flask import Flask, request, jsonify, send_file, send_from_directory
-from pathlib import Path
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
-# JSONBin.io 配置
-# 请替换以下两个值为你的 JSONBin 信息：
-# 1. 创建 Collection 后复制 Collection ID（格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx）
-# 2. 在 Collection 中创建一个新 Bin，复制该 Bin 的 ID（格式：xxxxxxxxxxxxxxxx）
-JSONBIN_COLLECTION_ID = os.environ.get('JSONBIN_COLLECTION_ID', '')
-JSONBIN_BIN_ID = os.environ.get('JSONBIN_BIN_ID', '')
-JSONBIN_API_KEY = os.environ.get('JSONBIN_API_KEY', '')
+# GitHub Gist 配置
+GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN', '')
+GITHUB_GIST_ID = os.environ.get('GITHUB_GIST_ID', 'eda7ded8c86c3aecd41a47f675ad5a54')
 
-_jsonbin_ctx = ssl.create_default_context()
-_jsonbin_ctx.check_hostname = False
-_jsonbin_ctx.verify_mode = ssl.CERT_NONE
+_gist_ctx = ssl.create_default_context()
+_gist_ctx.check_hostname = False
+_gist_ctx.verify_mode = ssl.CERT_NONE
 
-def _jsonbin_req(path, data=None, method='GET'):
-    """向 JSONBin.io 发起请求"""
-    url = f'https://api.jsonbin.io/v3{path}'
+def _gist_req(path, data=None, method='GET'):
+    url = f'https://api.github.com{path}'
     headers = {
+        'Authorization': f'token {GITHUB_TOKEN}',
+        'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
-        'X-Access-Key': JSONBIN_API_KEY,
         'User-Agent': 'love-scorebook/1.0'
     }
     try:
         body = json.dumps(data, ensure_ascii=False).encode() if data else None
         req = urllib.request.Request(url, data=body, method=method, headers=headers)
-        with urllib.request.urlopen(req, timeout=10, context=_jsonbin_ctx) as r:
+        with urllib.request.urlopen(req, timeout=15, context=_gist_ctx) as r:
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         try:
-            err = json.loads(e.read())
-            return {'error': err}
+            return {'error': json.loads(e.read())}
         except:
             return {'error': str(e)}
     except Exception as e:
         return {'error': str(e)}
 
 def load_data():
-    """从 JSONBin 加载数据"""
-    if not JSONBIN_BIN_ID or not JSONBIN_API_KEY:
-        return _load_local_fallback()
-
-    result = _jsonbin_req(f'/c/{JSONBIN_COLLECTION_ID}/{JSONBIN_BIN_ID}')
-    if 'record' in result:
-        return result['record']
-    # 如果请求失败，尝试降级到本地文件
+    """从 GitHub Gist 加载数据"""
+    result = _gist_req(f'/gists/{GITHUB_GIST_ID}')
+    if 'files' in result and 'data.json' in result['files']:
+        try:
+            content = result['files']['data.json']['content']
+            return json.loads(content)
+        except (json.JSONDecodeError, KeyError):
+            pass
+    # 降级到本地文件
     return _load_local_fallback()
 
 def save_data(data):
-    """保存数据到 JSONBin"""
-    if not JSONBIN_BIN_ID or not JSONBIN_API_KEY:
-        return _save_local_fallback(data)
-
-    result = _jsonbin_req(f'/c/{JSONBIN_COLLECTION_ID}/{JSONBIN_BIN_ID}', data, 'PUT')
+    """保存数据到 GitHub Gist"""
+    result = _gist_req(f'/gists/{GITHUB_GIST_ID}', data, 'PATCH')
     if 'error' in result:
         # 降级到本地文件
         _save_local_fallback(data)
 
 def _load_local_fallback():
-    """降级：本地文件读取"""
     try:
         with open('data.json', 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -78,13 +69,11 @@ def _load_local_fallback():
         return {'entries': [], 'coupleName': '', 'unlocked': []}
 
 def _save_local_fallback(data):
-    """降级：本地文件写入"""
     with open('data.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 @app.route('/')
 def index():
-    # return send_file('index.html')  # Render 兼容
     return send_from_directory(os.path.dirname(__file__), 'index.html')
 
 @app.route('/api/data', methods=['GET'])
@@ -99,7 +88,6 @@ def save_all():
 
 @app.route('/api/entry', methods=['POST'])
 def add_entry():
-    """添加一条记录"""
     entry = request.json or {}
     data = load_data()
     data.setdefault('entries', [])
@@ -112,7 +100,6 @@ def add_entry():
 
 @app.route('/api/entry/<int:entry_id>', methods=['DELETE'])
 def del_entry(entry_id):
-    """删除一条记录"""
     data = load_data()
     data['entries'] = [e for e in data.get('entries', []) if e.get('id') != entry_id]
     save_data(data)
@@ -120,7 +107,6 @@ def del_entry(entry_id):
 
 @app.route('/api/reset', methods=['POST'])
 def reset_all():
-    """清空所有记录"""
     save_data({'entries': [], 'coupleName': '', 'unlocked': []})
     return jsonify({'ok': True})
 
