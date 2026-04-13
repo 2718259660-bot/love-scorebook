@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>恋爱计分小本本 💕</title>
+<style>
+:root {
+  --pink: #ff6b9d;
+  --pink-light: #ffd6e4;
+  --pink-dark: #e91e63;
+  --purple: #9c27b0;
+  --cream: #fff8f0;
+  --gold: #f5c518;
+  --shadow: 0 6px 24px rgba(233,30,99,0.15);
+  --r: 20px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'PingFang SC','Microsoft YaHei',sans-serif; background:var(--cream); min-height:100vh; overflow-x:hidden; }
+
+#confetti { position:fixed; inset:0; pointer-events:none; z-index:999; }
+
+#header {
+  background: linear-gradient(135deg,#ff6b9d,#c2185b);
+  color:white; text-align:center; padding:32px 20px 28px; position:relative; overflow:hidden;
+}
+#header::before {
+  content:''; position:absolute; inset:0;
+  background: url('https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1200&q=60') center/cover;
+  opacity:0.18;
+}
+#header > * { position:relative; z-index:1; }
+.hb { position:absolute; font-size:120px; opacity:0.06; animation:fh 6s ease-in-out infinite; }
+.hb:nth-child(1){top:-20px;left:5%}.hb:nth-child(2){top:10px;right:8%;font-size:80px;animation-delay:1.5s}
+@keyframes fh { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-12px) rotate(5deg)} }
+#header h1 { font-size:2em; font-weight:900; letter-spacing:2px; text-shadow:0 2px 8px rgba(0,0,0,0.2); }
+#header p { opacity:0.9; margin-top:6px; font-size:0.95em; }
+.couple-name {
+  display:inline-block; background:rgba(255,255,255,0.2); border-radius:30px;
+  padding:6px 20px; margin-top:14px; font-size:1.05em; font-weight:700;
+  backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.3); cursor:pointer;
+}
+
+#score-hero { display:flex; justify-content:center; align-items:center; gap:24px; padding:24px 20px 0; flex-wrap:wrap; }
+#score-circle {
+  width:180px; height:180px; border-radius:50%; background:white;
+  box-shadow:0 0 0 8px var(--pink-light), 0 0 0 16px rgba(255,107,157,0.1), var(--shadow);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+#score-circle .num { font-size:3.2em; font-weight:900; color:var(--pink-dark); font-family:Georgia,serif; line-height:1; }
+#score-circle .lab { font-size:0.8em; color:var(--pink-dark); margin-top:2px; font-weight:600; }
+#score-circle .max { font-size:0.72em; color:#bbb; }
+#score-detail { flex:1; max-width:280px; }
+.srow { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:0.88em; }
+.sbar { flex:1; height:8px; background:#f0f0f0; border-radius:4px; margin:0 10px; overflow:hidden; }
+.sbar-fill { height:100%; border-radius:4px; transition:width 0.6s cubic-bezier(.4,0,.2,1); }
+.sbar-fill.pos { background:linear-gradient(to right,#ff6b9d,#e91e63); }
+.sbar-fill.neg { background:linear-gradient(to right,#9c27b0,#673ab7); }
+.sval { font-weight:700; min-width:30px; text-align:right; }
+.sval.pos { color:var(--pink); }
+.sval.neg { color:var(--purple); }
+.stip { margin-top:10px; font-size:0.82em; color:var(--pink-dark); text-align:center; font-weight:700; }
+
+#tabs { display:flex; justify-content:center; gap:8px; padding:20px 16px 0; flex-wrap:wrap; }
+.tbtn {
+  padding:8px 18px; border-radius:30px; border:2px solid var(--pink);
+  background:white; color:var(--pink); font-size:0.88em; font-weight:700;
+  cursor:pointer; transition:all 0.2s; font-family:inherit;
+}
+.tbtn:hover { background:var(--pink-light); }
+.tbtn.active { background:var(--pink); color:white; }
+
+#content { max-width:900px; margin:20px auto; padding:0 16px; display:flex; flex-direction:column; gap:16px; }
+
+/* Tab panels */
+.tpanel { display:none; flex-direction:column; gap:16px; }
+.tpanel.active { display:flex; }
+
+/* Add form grid: score card | add form */
+.add-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:640px){ .add-grid{grid-template-columns:1fr;} }
+
+.card { background:white; border-radius:var(--r); padding:20px; box-shadow:var(--shadow); border:1.5px solid rgba(255,107,157,0.15); }
+.ctitle { font-size:0.95em; font-weight:800; color:var(--pink-dark); margin-bottom:14px; display:flex; align-items:center; gap:6px; padding-bottom:10px; border-bottom:2px solid var(--pink-light); }
+
+.add-tabs { display:flex; gap:6px; margin-bottom:10px; }
+.atab { flex:1; padding:7px; text-align:center; border-radius:10px; font-size:0.82em; font-weight:700; cursor:pointer; border:2px solid #eee; background:#fafafa; color:#888; transition:all 0.2s; }
+.atab.pos.active { background:#fce4ec; border-color:var(--pink); color:var(--pink-dark); }
+.atab.neg.active { background:#f3e5f5; border-color:var(--purple); color:var(--purple); }
+
+.cgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:10px; }
+@media(max-width:480px){ .cgrid{grid-template-columns:repeat(2,1fr);} }
+.cbtn {
+  padding:8px 4px; text-align:center; border-radius:10px; font-size:0.78em;
+  cursor:pointer; border:2px solid #eee; background:#fafafa;
+  transition:all 0.2s; line-height:1.4; font-weight:600; font-family:inherit;
+}
+.cbtn:hover { border-color:var(--pink); background:#fce4ec; color:var(--pink-dark); }
+.cbtn.sel { background:var(--pink); color:white; border-color:var(--pink); }
+
+.irow { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.ilab { font-size:0.82em; color:#888; min-width:40px; }
+.ibtns { display:flex; gap:4px; flex:1; }
+.ibtn { flex:1; padding:7px 4px; border-radius:8px; border:2px solid #eee; background:#fafafa; font-size:0.78em; cursor:pointer; font-weight:700; color:#888; transition:all 0.15s; font-family:inherit; }
+.ibtn:hover { border-color:var(--pink); }
+.ibtn.sel { background:var(--pink); color:white; border-color:var(--pink); }
+
+.emrow { display:flex; gap:6px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.emlab { font-size:0.82em; color:#888; }
+.em { font-size:1.5em; cursor:pointer; border:2px solid transparent; border-radius:50%; padding:4px; transition:all 0.15s; background:#fafafa; }
+.em:hover { border-color:var(--pink); transform:scale(1.15); }
+.em.sel { border-color:var(--pink); background:#fce4ec; transform:scale(1.1); }
+
+.ninput { width:100%; border:2px solid #eee; border-radius:10px; padding:8px 10px; font-size:0.85em; font-family:inherit; resize:none; outline:none; transition:border-color 0.2s; margin-bottom:10px; }
+.ninput:focus { border-color:var(--pink); }
+
+.sbtn {
+  width:100%; padding:12px; border-radius:12px; border:none;
+  background:linear-gradient(135deg,var(--pink),var(--pink-dark));
+  color:white; font-size:0.95em; font-weight:800; cursor:pointer;
+  font-family:inherit; box-shadow:0 4px 15px rgba(233,30,99,0.3);
+  transition:all 0.2s; letter-spacing:1px;
+}
+.sbtn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(233,30,99,0.4); }
+.sbtn:active { transform:translateY(0); }
+
+.hlist { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+.hitem { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:12px; border-left:4px solid; }
+.hitem.pos { background:#fff8f0; border-color:#ff6b9d; }
+.hitem.neg { background:#f8f0ff; border-color:#9c27b0; }
+.hem { font-size:1.4em; flex-shrink:0; }
+.hbody { flex:1; }
+.htitle { font-weight:700; margin-bottom:2px; font-size:0.88em; }
+.hnote { color:#888; font-size:0.8em; }
+.hmeta { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+.htag { background:#f0f0f0; border-radius:4px; padding:1px 6px; font-size:0.72em; color:#666; }
+.htime { color:#bbb; font-size:0.75em; margin-top:3px; }
+.hdel { margin-left:auto; color:#ccc; cursor:pointer; font-size:0.9em; padding:2px 6px; border-radius:4px; flex-shrink:0; }
+.hdel:hover { background:#fee; color:#e91e63; }
+
+.empty { text-align:center; padding:40px 16px; color:#ccc; }
+.empty .es { font-size:2.5em; display:block; margin-bottom:8px; }
+
+.rstbtn { width:100%; margin-top:12px; padding:10px; border-radius:10px; border:2px solid #fce4ec; background:white; color:var(--pink); font-size:0.85em; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.rstbtn:hover { background:#fce4ec; }
+
+.agrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:480px){ .agrid{grid-template-columns:repeat(2,1fr);} }
+.aitem { text-align:center; padding:14px 8px; border-radius:14px; border:2px solid #eee; transition:all 0.3s; position:relative; cursor:default; }
+.aitem.unlocked { border-color:var(--gold); background:linear-gradient(135deg,#fffdf0,#fff3cd); }
+.aitem.locked { opacity:0.45; }
+.aitem:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,0.1); }
+.aicon { font-size:2em; display:block; margin-bottom:6px; }
+.aname { font-size:0.75em; font-weight:700; color:#444; }
+.adesc { font-size:0.68em; color:#888; margin-top:3px; }
+.alock { position:absolute; top:6px; right:6px; font-size:0.75em; }
+
+.sgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+@media(max-width:480px){ .sgrid{grid-template-columns:repeat(2,1fr);} }
+.sitem { background:#fafafa; border-radius:12px; padding:14px; text-align:center; }
+.sv { font-size:1.8em; font-weight:900; color:var(--pink); }
+.sl { font-size:0.72em; color:#888; margin-top:3px; }
+
+/* Modal */
+#modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center; backdrop-filter:blur(4px); }
+#modal-overlay.open { display:flex; }
+#modal { background:white; border-radius:20px; padding:28px 24px; max-width:360px; width:90vw; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+#modal h3 { font-size:1.2em; color:var(--pink-dark); margin-bottom:8px; }
+#modal p { font-size:0.9em; color:#888; margin-bottom:20px; line-height:1.6; }
+#modal input { width:100%; border:2px solid #eee; border-radius:10px; padding:10px; font-size:1em; font-family:inherit; margin-bottom:14px; outline:none; }
+#modal input:focus { border-color:var(--pink); }
+.mbtns { display:flex; gap:10px; }
+.mbtn { flex:1; padding:10px; border-radius:10px; font-size:0.9em; font-weight:700; cursor:pointer; font-family:inherit; border:none; }
+.mbtn.cancel { background:#f0f0f0; color:#888; }
+.mbtn.confirm { background:linear-gradient(135deg,var(--pink),var(--pink-dark)); color:white; }
+
+.badge { display:inline-block; background:var(--gold); color:white; border-radius:20px; padding:1px 7px; font-size:0.65em; font-weight:700; margin-left:4px; animation:pl 2s infinite; }
+@keyframes pl { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+@media(max-width:480px){
+  #header h1{font-size:1.6em}
+  #score-circle{width:150px;height:150px}
+  #score-circle .num{font-size:2.6em}
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h3>👋 给你们的恋爱本起个名字吧！</h3>
+    <p>把你们的故事记录在这里～</p>
+    <input type="text" id="couple-name-input" placeholder="例如：小明 & 小红" />
+    <div class="mbtns">
+      <button class="mbtn cancel" onclick="closeModal()">取消</button>
+      <button class="mbtn confirm" onclick="saveCoupleName()">保存 💕</button>
+    </div>
+  </div>
+</div>
+
+<div id="header">
+  <span class="hb">💕</span><span class="hb">💗</span>
+  <h1>💑 恋爱计分小本本</h1>
+  <p>记录我们的每一个心动瞬间</p>
+  <div class="couple-name" id="couple-name-display" onclick="openModal()">
+    <span id="display-name">点击设置我们的名字</span> ✏️
+  </div>
+</div>
+
+<div id="score-hero">
+  <div id="score-circle">
+    <div class="num" id="total-score">0</div>
+    <div class="lab">恋爱积分</div>
+    <div class="max">满分: <span id="score-cap">1000</span></div>
+  </div>
+  <div id="score-detail">
+    <div class="srow">
+      <span>💕 甜蜜值</span>
+      <div class="sbar"><div class="sbar-fill pos" id="bar-positive" style="width:0%"></div></div>
+      <span class="sval pos" id="val-positive">0</span>
+    </div>
+    <div class="srow">
+      <span>💔 矛盾值</span>
+      <div class="sbar"><div class="sbar-fill neg" id="bar-negative" style="width:0%"></div></div>
+      <span class="sval neg" id="val-negative">0</span>
+    </div>
+    <div class="stip" id="score-tip">开始记录我们的故事吧 💕</div>
+  </div>
+</div>
+
+<div id="tabs">
+  <button class="tbtn active" id="btn-add" onclick="switchTab('add')">➕ 记一笔</button>
+  <button class="tbtn" id="btn-history" onclick="switchTab('history')">📖 记录</button>
+  <button class="tbtn" id="btn-achieve" onclick="switchTab('achieve')">🏆 成就</button>
+  <button class="tbtn" id="btn-stats" onclick="switchTab('stats')">📊 数据</button>
+</div>
+
+<div id="content">
+
+  <!-- ===== ADD TAB ===== -->
+  <div class="tpanel active" id="panel-add">
+    <div class="add-grid">
+
+      <!-- Left: mini stats card -->
+      <div class="card">
+        <div class="ctitle">📊 今日小记</div>
+        <div id="today-stats" style="font-size:0.88em; color:#888;">
+          暂无记录，开始第一笔吧！
+        </div>
+      </div>
+
+      <!-- Right: add form -->
+      <div class="card">
+        <div class="ctitle">📝 记一笔 <span class="badge">NEW</span></div>
+
+        <div class="add-tabs">
+          <div class="atab pos active" id="tab-pos" onclick="setMode('positive')">💕 甜蜜时刻</div>
+          <div class="atab neg" id="tab-neg" onclick="setMode('negative')">💔 小矛盾</div>
+        </div>
+
+        <div class="cgrid" id="cat-grid"></div>
+
+        <div class="irow">
+          <span class="ilab">强度</span>
+          <div class="ibtns">
+            <button class="ibtn" data-v="1" onclick="setIntensity(1)">1</button>
+            <button class="ibtn sel" data-v="2" onclick="setIntensity(2)">2</button>
+            <button class="ibtn" data-v="3" onclick="setIntensity(3)">3</button>
+            <button class="ibtn" data-v="5" onclick="setIntensity(5)">5</button>
+            <button class="ibtn" data-v="8" onclick="setIntensity(8)">8</button>
+          </div>
+        </div>
+
+        <div class="emrow">
+          <span class="emlab">心情</span>
+          <div id="emoji-btns">
+            <span class="em" data-e="😆" onclick="setEmoji(this)">😆</span>
+            <span class="em" data-e="😊" onclick="setEmoji(this)">😊</span>
+            <span class="em sel" data-e="🥰" onclick="setEmoji(this)">🥰</span>
+            <span class="em" data-e="🤭" onclick="setEmoji(this)">🤭</span>
+            <span class="em" data-e="😘" onclick="setEmoji(this)">😘</span>
+            <span class="em" data-e="🤔" onclick="setEmoji(this)">🤔</span>
+            <span class="em" data-e="😤" onclick="setEmoji(this)">😤</span>
+            <span class="em" data-e="😢" onclick="setEmoji(this)">😢</span>
+          </div>
+        </div>
+
+        <textarea class="ninput" id="note-input" rows="2" placeholder="写点什么...（选填）"></textarea>
+        <button class="sbtn" onclick="submitEntry()">💕 记录这一刻</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div class="tpanel" id="panel-history">
+    <div class="card">
+      <div class="ctitle">📖 我们的故事 <span id="history-count" style="font-size:0.8em;font-weight:400;color:#888"></span></div>
+      <div class="hlist" id="history-list">
+        <div class="empty"><span class="es">💌</span>还没有记录哦～<br>开始记录你们的甜蜜时刻吧！</div>
+      </div>
+      <button class="rstbtn" onclick="confirmReset()">🗑️ 清空所有记录</button>
+    </div>
+  </div>
+
+  <!-- ===== ACHIEVE TAB ===== -->
+  <div class="tpanel" id="panel-achieve">
+    <div class="card">
+      <div class="ctitle">🏆 成就墙 <span id="achieve-progress" style="font-size:0.8em;font-weight:400;color:#888"></span></div>
+      <div class="agrid" id="achieve-grid"></div>
+    </div>
+  </div>
+
+  <!-- ===== STATS TAB ===== -->
+  <div class="tpanel" id="panel-stats">
+    <div class="card">
+      <div class="ctitle">📊 数据统计</div>
+      <div class="sgrid" id="stats-grid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+// ===== API CONFIG =====
+const API = '';
+
+async function api(method, path, body) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch((API||'') + path, opts);
+  return r.json();
+}
+
+// ===== DATA =====
+const CATS = {
+  positive: [
+    {id:'date',    name:'约会',      emoji:'🌹'},
+    {id:'gift',   name:'送礼物',    emoji:'🎁'},
+    {id:'chat',   name:'聊天/关心', emoji:'💬'},
+    {id:'romantic',name:'惊喜/浪漫', emoji:'✨'},
+    {id:'kiss',   name:'亲亲抱抱',  emoji:'😘'},
+    {id:'home',   name:'回家见父母', emoji:'🏠'},
+    {id:'help',   name:'帮忙做事',  emoji:'🤝'},
+    {id:'patience',name:'包容理解',  emoji:'🫂'},
+    {id:'other',  name:'其他甜蜜',  emoji:'💕'},
+  ],
+  negative: [
+    {id:'fight',  name:'吵架',      emoji:'😤'},
+    {id:'cold',   name:'冷暴力',    emoji:'🥶'},
+    {id:'lie',    name:'说谎/欺骗', emoji:'🙈'},
+    {id:'ignore', name:'忽视对方',  emoji:'😞'},
+    {id:'late',   name:'迟到/爽约', emoji:'⏰'},
+    {id:'selfish',name:'自私/任性', emoji:'😓'},
+    {id:'other',  name:'其他矛盾',  emoji:'💔'},
+  ]
+};
+
+const ACHIEVES = [
+  {id:'first_date',  name:'初次约会',   desc:'记录第一次约会',     emoji:'🌸', fn: d => d.h.filter(h=>h.cat==='date').length >= 1},
+  {id:'gift_5',      name:'礼物达人',   desc:'送出5份礼物',         emoji:'🎁', fn: d => d.h.filter(h=>h.cat==='gift').length >= 5},
+  {id:'score_100',  name:'百分甜蜜',   desc:'甜蜜值达到100',       emoji:'💯', fn: d => d.stats.pos >= 100},
+  {id:'score_500',  name:'五百甜蜜',   desc:'甜蜜值达到500',       emoji:'💖', fn: d => d.stats.pos >= 500},
+  {id:'kiss_10',    name:'亲亲十连',   desc:'记录10次亲亲',       emoji:'😘', fn: d => d.h.filter(h=>h.cat==='kiss').length >= 10},
+  {id:'romantic_3', name:'浪漫达人',   desc:'3次惊喜浪漫',         emoji:'✨', fn: d => d.h.filter(h=>h.cat==='romantic').length >= 3},
+  {id:'forgive_5',  name:'包容之心',   desc:'记录5次包容理解',     emoji:'🫂', fn: d => d.h.filter(h=>h.cat==='patience').length >= 5},
+  {id:'date_10',    name:'约会达人',   desc:'约会10次',             emoji:'💑', fn: d => d.h.filter(h=>h.cat==='date').length >= 10},
+  {id:'chat_20',    name:'话痨情侣',   desc:'聊天关心记录20次',     emoji:'💬', fn: d => d.h.filter(h=>h.cat==='chat').length >= 20},
+  {id:'first_gift', name:'第一份礼物', desc:'送出第一份礼物',       emoji:'🎀', fn: d => d.h.filter(h=>h.cat==='gift').length >= 1},
+  {id:'no_fight_7', name:'甜蜜一周',   desc:'连续7天无吵架',       emoji:'😇', fn: d => checkStreak(d)},
+  {id:'neg_zero',    name:'零矛盾周',   desc:'最近7天无矛盾',       emoji:'🕊️', fn: d => checkNoRecentNeg(d)},
+];
+
+// ===== STATE =====
+let st = { mode:'positive', selCat:null, intensity:2, emoji:'🥰', entries:[], coupleName:'', unlocked:[], pos:0, neg:0 };
+
+function checkStreak(d) {
+  const now=Date.now(), weekAgo=now-7*86400000;
+  return d.h.filter(h=>h.neg&&h.t>weekAgo).length===0;
+}
+function checkNoRecentNeg(d) {
+  const now=Date.now(), weekAgo=now-7*86400000;
+  return d.h.filter(h=>h.neg&&h.t>weekAgo).length===0;
+}
+
+// ===== INIT =====
+async function init() {
+  await loadFromServer();
+  if (!st.coupleName) {
+    document.getElementById('modal-overlay').classList.add('open');
+  } else {
+    document.getElementById('display-name').textContent = st.coupleName;
+  }
+  renderCats();
+  updateScore();
+  renderHistory();
+  renderAchieve();
+  renderStats();
+  renderToday();
+}
+
+async function loadFromServer() {
+  try {
+    const data = await api('GET', '/api/data');
+    st.entries = data.entries || [];
+    st.coupleName = data.coupleName || '';
+    st.unlocked = data.unlocked || [];
+    recalc();
+  } catch(e) {
+    try {
+      const s = localStorage.getItem('lsb-v1');
+      if (s) { const d=JSON.parse(s); st.entries=d.entries||[]; st.coupleName=d.coupleName||''; st.unlocked=d.unlocked||[]; }
+      recalc();
+    } catch(e2) {}
+  }
+}
+
+async function saveToServer() {
+  try {
+    await api('POST', '/api/data', {entries:st.entries, coupleName:st.coupleName, unlocked:st.unlocked});
+  } catch(e) {
+    localStorage.setItem('lsb-v1', JSON.stringify({entries:st.entries, coupleName:st.coupleName, unlocked:st.unlocked}));
+  }
+}
+
+function recalc() {
+  st.pos = st.entries.filter(e=>!e.neg).reduce((s,e)=>s+e.v,0);
+  st.neg = st.entries.filter(e=>e.neg).reduce((s,e)=>s+e.v,0);
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+name).classList.add('active');
+  document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name==='history') renderHistory();
+  if (name==='achieve') renderAchieve();
+  if (name==='stats') renderStats();
+}
+
+// ===== MODE =====
+function setMode(m) {
+  st.mode=m; st.selCat=null;
+  document.getElementById('tab-pos').classList.toggle('active', m==='positive');
+  document.getElementById('tab-neg').classList.toggle('active', m==='negative');
+  renderCats();
+}
+
+// ===== CATS =====
+function renderCats() {
+  const cats = CATS[st.mode];
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = cats.map(c =>
+    '<button class="cbtn'+(st.selCat===c.id?' sel':'')+'" onclick="selCat(\''+c.id+'\')">'+
+    '<span style="font-size:1.2em">'+c.emoji+'</span><br>'+c.name+'</button>'
+  ).join('');
+}
+function selCat(id) { st.selCat=id; renderCats(); }
+
+// ===== INTENSITY =====
+function setIntensity(v) {
+  st.intensity=v;
+  document.querySelectorAll('.ibtn').forEach(b=>b.classList.toggle('sel', parseInt(b.dataset.v)===v));
+}
+
+// ===== EMOJI =====
+function setEmoji(el) {
+  st.emoji=el.dataset.e;
+  document.querySelectorAll('.em').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ===== SUBMIT =====
+async function submitEntry() {
+  if (!st.selCat) { alert('请先选择一个类别哦～'); return; }
+  const cat = CATS[st.mode].find(c=>c.id===st.selCat);
+  const note = document.getElementById('note-input').value.trim();
+  const entry = { id:Date.now(), cat:st.selCat, cname:cat.name, emoji:st.emoji, v:st.intensity, neg:st.mode==='negative', note, t:Date.now() };
+  try { await api('POST', '/api/entry', entry); } catch(e) {}
+  st.entries.unshift(entry);
+  recalc();
+  checkAchieve();
+  saveToServer();
+  updateScore();
+  renderHistory();
+  renderAchieve();
+  renderStats();
+  renderToday();
+  document.getElementById('note-input').value = '';
+  st.selCat=null; renderCats();
+  triggerConfetti();
+}
+
+// ===== SCORE =====
+function updateScore() {
+  const total = st.pos - st.neg;
+  document.getElementById('total-score').textContent = Math.max(0,total);
+  document.getElementById('score-cap').textContent = 1000;
+  document.getElementById('val-positive').textContent = '+'+st.pos;
+  document.getElementById('val-negative').textContent = '-'+st.neg;
+  document.getElementById('bar-positive').style.width = Math.min(st.pos/200*100,100)+'%';
+  document.getElementById('bar-negative').style.width = Math.min(st.neg/200*100,100)+'%';
+  let tip='开始记录我们的故事吧 💕';
+  if(total>=500) tip='💖 超级甜蜜情侣！';
+  else if(total>=200) tip='💕 感情升温中～';
+  else if(total>=50) tip='😊 甜蜜小日子';
+  else if(total<0) tip='💔 需要好好沟通哦';
+  else tip='🥰 记录每一个瞬间';
+  document.getElementById('score-tip').textContent=tip;
+}
+
+// ===== TODAY =====
+function renderToday() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayEntries = st.entries.filter(e => new Date(e.t) >= today);
+  const posT=todayEntries.filter(e=>!e.neg), negT=todayEntries.filter(e=>e.neg);
+  const posS=posT.reduce((s,e)=>s+e.v,0), negS=negT.reduce((s,e)=>s+e.v,0);
+  document.getElementById('today-stats').innerHTML = st.entries.length===0
+    ? '暂无记录，开始第一笔吧！'
+    : '<div style="margin-bottom:8px">今日甜蜜: <b style="color:var(--pink)">+'+posS+'</b> &nbsp;|&nbsp; 今日矛盾: <b style="color:var(--purple)">-'+negS+'</b></div><div style="color:#aaa;font-size:0.8em">共 '+st.entries.length+' 条记录，'+todayEntries.length+' 条今日</div>';
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  document.getElementById('history-count').textContent = '('+st.entries.length+'条记录)';
+  if (!st.entries.length) { list.innerHTML='<div class="empty"><span class="es">💌</span>还没有记录哦～<br>开始记录你们的甜蜜时刻吧！</div>'; return; }
+  list.innerHTML = st.entries.map(e => {
+    const d = new Date(e.t);
+    const ts = (d.getMonth()+1)+'月'+d.getDate()+'日 '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    return '<div class="hitem '+(e.neg?'neg':'pos')+'">'+
+      '<span class="hem">'+e.emoji+'</span>'+
+      '<div class="hbody">'+
+      '<div class="htitle">'+e.emoji+' '+e.cname+' '+(e.neg?'-':'+')+e.v+'分</div>'+
+      (e.note?'<div class="hnote">"'+e.note+'"</div>':'')+
+      '<div class="hmeta"><span class="htag">'+(e.neg?'💔':'💕')+'</span></div>'+
+      '<div class="htime">'+ts+'</div></div>'+
+      '<span class="hdel" onclick="delEntry('+e.id+')">✕</span></div>';
+  }).join('');
+}
+
+async function delEntry(id) {
+  try { await api('DELETE', '/api/entry/'+id); } catch(e) {}
+  st.entries = st.entries.filter(e=>e.id!==id);
+  recalc();
+  saveToServer();
+  updateScore(); renderHistory(); renderAchieve(); renderStats(); renderToday();
+}
+
+async function confirmReset() {
+  if (!confirm('确定要清空所有记录吗？不可恢复哦！😢')) return;
+  try { await api('POST', '/api/reset'); } catch(e) {}
+  st.entries=[]; recalc(); saveToServer();
+  updateScore(); renderHistory(); renderAchieve(); renderStats(); renderToday();
+}
+
+// ===== ACHIEVE =====
+function checkAchieve() {
+  const data = { h:st.entries, stats:{pos:st.pos} };
+  ACHIEVES.forEach(a => {
+    if (!st.unlocked.includes(a.id) && a.fn(data)) {
+      st.unlocked.push(a.id);
+      saveToServer();
+      setTimeout(()=>triggerConfetti(), 200);
+    }
+  });
+}
+
+function renderAchieve() {
+  const grid = document.getElementById('achieve-grid');
+  const count = (st.unlocked||[]).length;
+  document.getElementById('achieve-progress').textContent = '('+count+'/'+ACHIEVES.length+')';
+  grid.innerHTML = ACHIEVES.map(a => {
+    const ok = (st.unlocked||[]).includes(a.id);
+    return '<div class="aitem '+(ok?'unlocked':'locked')+'">'+
+      '<span class="aicon">'+a.emoji+'</span>'+
+      '<div class="aname">'+a.name+'</div>'+
+      '<div class="adesc">'+a.desc+'</div>'+
+      (!ok?'<span class="alock">🔒</span>':'')+'</div>';
+  }).join('');
+}
+
+// ===== STATS =====
+function renderStats() {
+  const grid = document.getElementById('stats-grid');
+  const total=st.pos-st.neg;
+  const posE=st.entries.filter(e=>!e.neg), negE=st.entries.filter(e=>e.neg);
+  const avgPos=posE.length?(st.pos/posE.length).toFixed(1):'0';
+  const avgNeg=negE.length?(st.neg/negE.length).toFixed(1):'0';
+  const first=st.entries.length?new Date(st.entries[st.entries.length-1].t):null;
+  const days=first?Math.floor((Date.now()-first.getTime())/86400000):0;
+  const top=getTopCat(posE);
+  grid.innerHTML =
+    '<div class="sitem"><div class="sv">'+Math.max(0,total)+'</div><div class="sl">当前积分</div></div>'+
+    '<div class="sitem"><div class="sv">'+st.entries.length+'</div><div class="sl">总记录</div></div>'+
+    '<div class="sitem"><div class="sv">'+posE.length+'</div><div class="sl">甜蜜时刻</div></div>'+
+    '<div class="sitem"><div class="sv">'+negE.length+'</div><div class="sl">小矛盾</div></div>'+
+    '<div class="sitem"><div class="sv">'+avgPos+'</div><div class="sl">均甜蜜分</div></div>'+
+    '<div class="sitem"><div class="sv">'+avgNeg+'</div><div class="sl">均矛盾分</div></div>'+
+    '<div class="sitem"><div class="sv">'+(days||'-')+'</div><div class="sl">在一起(天)</div></div>'+
+    '<div class="sitem"><div class="sv">'+(top.emoji||'💕')+'</div><div class="sl">最高频</div></div>';
+}
+
+function getTopCat(entries) {
+  const m={}; entries.forEach(e=>{ m[e.cat]=(m[e.cat]||0)+1; });
+  const arr=Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  if(!arr.length) return {};
+  return CATS.positive.find(c=>c.id===arr[0][0]) || {};
+}
+
+// ===== MODAL =====
+function openModal() { document.getElementById('modal-overlay').classList.add('open'); document.getElementById('couple-name-input').value=st.coupleName||''; document.getElementById('couple-name-input').focus(); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+async function saveCoupleName() {
+  const n = document.getElementById('couple-name-input').value.trim();
+  if (!n) return;
+  st.coupleName = n;
+  try { await api('POST', '/api/couple-name', {name:n}); } catch(e) {}
+  saveToServer();
+  document.getElementById('display-name').textContent = n;
+  closeModal();
+}
+document.getElementById('modal-overlay').addEventListener('click', e => { if(e.target===document.getElementById('modal-overlay')) closeModal(); });
+
+// ===== CONFETTI =====
+function triggerConfetti() {
+  const cv=document.getElementById('confetti'), ctx=cv.getContext('2d');
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const colors=['#ff6b9d','#f5c518','#e91e63','#9c27b0','#ff80ab','#ffd54f','#ff4081'];
+  const ps=[];
+  for(let i=0;i<60;i++) ps.push({x:Math.random()*cv.width,y:-20,vx:(Math.random()-0.5)*4,vy:Math.random()*3+2,c:colors[Math.floor(Math.random()*colors.length)],s:Math.random()*8+4,r:Math.random()*360,rv:(Math.random()-0.5)*10});
+  let fr=0;
+  function draw() {
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{ p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.r+=p.rv;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);
+      ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s);ctx.restore(); });
+    fr++;
+    if(fr<120) requestAnimationFrame(draw); else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  draw();
+}
+
+init();
+
+
+</body>
+</html>
